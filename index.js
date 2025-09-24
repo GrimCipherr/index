@@ -1,39 +1,37 @@
+// Import keep_alive first to prevent Railway from sleeping
+const keep_alive = require('./keep_alive.js'); 
 const Eris = require("eris");
-const express = require("express");
 
-// Make sure TOKEN exists
+// Ensure TOKEN is set
 if (!process.env.TOKEN) {
   console.error("❌ No TOKEN found in environment variables!");
   process.exit(1);
 }
 
-// Web server for Railway "keep alive"
-const app = express();
-app.get("/", (req, res) => res.send("✅ Bot is running on Railway!"));
-app.listen(3000, () => console.log("🌐 Web server started on port 3000"));
-
-// Connect bot
+// Connect the bot
 const bot = new Eris(process.env.TOKEN);
 
+// Log bot errors
 bot.on("error", (err) => {
   console.error("Bot error:", err);
 });
 
+// Bot ready event
 bot.on("ready", () => {
   console.log(`🤖 Logged in as ${bot.user.username}`);
 });
 
-// Commands
+// Message handler
 bot.on("messageCreate", async (msg) => {
-  if (msg.author.bot) return;
+  if (msg.author.bot) return; // Ignore bots
 
   if (msg.content === "!ping") {
     const start = Date.now();
     const temp = await bot.createMessage(msg.channel.id, "🏓 Pinging...");
 
     const latency = Date.now() - start;
-    const uptime = formatUptime(process.uptime());
     const apiLatency = bot.shards.get(0).latency;
+    const uptime = formatUptime(process.uptime());
 
     const embed = {
       title: "📊 Bot Status",
@@ -52,7 +50,7 @@ bot.on("messageCreate", async (msg) => {
   }
 });
 
-// Helper: uptime formatting
+// Helper: format uptime nicely
 function formatUptime(seconds) {
   const days = Math.floor(seconds / (3600 * 24));
   seconds %= 3600 * 24;
@@ -63,4 +61,5 @@ function formatUptime(seconds) {
   return `${days}d ${hours}h ${minutes}m ${secs}s`;
 }
 
+// Connect to Discord
 bot.connect();
